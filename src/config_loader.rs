@@ -3,9 +3,9 @@ use std::collections::{HashMap, HashSet};
 use crossbeam_channel::{unbounded, Sender};
 use wg_2024::{config::Config, controller::Command, network::NodeId, packet::Packet};
 
-use crate::structs_and_enums::{ClientServerOptions, DroneOptions};
+use crate::structs_and_enums::ClientServerOptions;
 
-use network_initializer::unofficial_wg_implementations::SimControllerOptions;
+use network_initializer::unofficial_wg_implementations::{DroneOptions, SimControllerOptions};
 
 pub fn config_to_options(
     config: &Config,
@@ -22,7 +22,7 @@ pub fn config_to_options(
     let mut simcontr = SimControllerOptions {
         command_send: HashMap::new(),
         command_recv: simcontroller_command_receiver,
-        config:config.clone()
+        config: config.clone(),
     };
 
     let mut edges: HashSet<(NodeId, NodeId)> = HashSet::new();
@@ -57,7 +57,6 @@ pub fn config_to_options(
         for e in n.connected_drone_ids.iter() {
             edges.insert((n.id, *e));
         }
-
     }
 
     for n in config.client.iter() {
@@ -82,7 +81,6 @@ pub fn config_to_options(
         for e in n.connected_drone_ids.iter() {
             edges.insert((n.id, *e));
         }
-
     }
 
     for n in config.server.iter() {
@@ -107,7 +105,6 @@ pub fn config_to_options(
         for e in n.connected_drone_ids.iter() {
             edges.insert((n.id, *e));
         }
-
     }
 
     while let Some((from, to)) = edges.iter().copied().next() {
