@@ -25,6 +25,7 @@ pub struct ClientServerOptions {
     pub packet_send: HashMap<NodeId, Sender<Packet>>,
 }
 
+// ? should this be up to the group or defined in WG repo?
 pub struct SimControllerOptions {
     pub command_send: HashMap<NodeId, Sender<Command>>,
     pub command_recv: Receiver<Command>,

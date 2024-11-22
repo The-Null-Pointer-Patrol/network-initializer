@@ -21,8 +21,6 @@ fn main() {
     let config_data = std::fs::read_to_string("./input.toml").expect("Unable to read config file");
     let config: Config = toml::from_str(&config_data).expect("Unable to parse TOML");
 
-    //
-
     let (drones, clients, servers, simcontr) = config_loader::config_to_options(&config);
 
     let handles = vec![];
@@ -31,6 +29,26 @@ fn main() {
         // for now incompatible
         let handler = thread::spawn(move || {
             let mut drone = MyDrone::new(options);
+            drone.run();
+        });
+        // todo: handle result
+        handles.push(handler);
+    }
+
+    for (id, options) in servers {
+        // for now incompatible
+        let handler = thread::spawn(move || {
+            let mut drone = MyServer::new(options);
+            drone.run();
+        });
+        // todo: handle result
+        handles.push(handler);
+    }
+
+    for (id, options) in clients {
+        // for now incompatible
+        let handler = thread::spawn(move || {
+            let mut drone = MyClient::new(options);
             drone.run();
         });
         // todo: handle result
