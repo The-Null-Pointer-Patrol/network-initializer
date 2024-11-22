@@ -28,7 +28,7 @@ pub fn config_to_options(
     // could be added to simulation controller
     let mut tmp_nodekind_identifier: HashMap<NodeId, NodeKind> = HashMap::new();
 
-    // the 3 following for cycles have a lot of shared code, 
+    // the 3 following for cycles have a lot of shared code,
     // but I think it's better to wait to see if there are protocol changes before trying to optimize them
 
     for n in config.drone.iter() {
@@ -117,28 +117,19 @@ pub fn config_to_options(
             panic!("initialization file is incorrect, as it does not represent a bidirectional graph: edge from {} to {} but no corresponding edge in node {}",from,to,to);
         }
 
-        // for now checks that edge is made of nodes
-        match (
-            tmp_nodekind_identifier.get(&to),
-            tmp_nodekind_identifier.get(&from),
-        ) {
-            (Some(NodeKind::Drone), Some(NodeKind::Drone)) => {
-                println!("{} {}", from, to);
-                // creates connection between nodes of the edge
-                drones
-                    .get_mut(&from)
-                    .unwrap()
-                    .packet_send
-                    .insert(to, tmp_sender_for_node.get(&to).unwrap().clone());
-                drones
-                    .get_mut(&to)
-                    .unwrap()
-                    .packet_send
-                    .insert(from, tmp_sender_for_node.get(&from).unwrap().clone());
-            }
-            _ => {}
-        }
+        // creates the two connections between nodes of the edge
+        drones
+            .get_mut(&from)
+            .unwrap()
+            .packet_send
+            .insert(to, tmp_sender_for_node.get(&to).unwrap().clone());
+        drones
+            .get_mut(&to)
+            .unwrap()
+            .packet_send
+            .insert(from, tmp_sender_for_node.get(&from).unwrap().clone());
 
+        // remove both representations of edge
         edges.remove(&(from, to));
         edges.remove(&(to, from));
     }
