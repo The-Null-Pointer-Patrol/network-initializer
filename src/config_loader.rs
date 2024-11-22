@@ -24,66 +24,91 @@ pub fn config_to_options(
 
     let mut edges: HashSet<(NodeId, NodeId)> = HashSet::new();
 
-    // let mut simulation_controller_receivers: HashMap<NodeId, Receiver<Command>> = HashMap::new();
-    let mut simulation_controller_senders: HashMap<NodeId, Sender<Command>> = HashMap::new();
-
     let mut tmp_sender_for_node: HashMap<NodeId, Sender<Packet>> = HashMap::new();
-    let mut tmp_command_: HashMap<NodeId, Sender<Packet>> = HashMap::new();
+    // could be added to simulation controller
     let mut tmp_nodekind_identifier: HashMap<NodeId, NodeKind> = HashMap::new();
 
-    for d in config.drone.iter() {
-        let (sim_send_command, node_receive_command) = unbounded::<Command>();
-        let (drone_send_packet, node_receive_packet) = unbounded::<Packet>();
+    // the 3 following for cycles have a lot of shared code, 
+    // but I think it's better to wait to see if there are protocol changes before trying to optimize them
 
-        simulation_controller_senders.insert(d.id, sim_send_command);
+    for n in config.drone.iter() {
+        let (sim_send_command, node_receive_command) = unbounded::<Command>();
+        let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
+
+        simcontr.command_send.insert(n.id, sim_send_command);
         // saves the channel on which the drone receives packets to use it later when creating edges
-        tmp_sender_for_node.insert(d.id, drone_send_packet);
+        tmp_sender_for_node.insert(n.id, node_send_packet);
 
         drones.insert(
-            d.id,
+            n.id,
             DroneOptions {
-                id: d.id,
+                id: n.id,
                 sim_contr_send: node_command_sender.clone(),
                 sim_contr_recv: node_receive_command,
                 packet_recv: node_receive_packet,
                 packet_send: HashMap::new(),
-                pdr: d.pdr,
+                pdr: n.pdr,
             },
         );
 
-        for e in d.connected_drone_ids.iter() {
-            edges.insert((d.id, *e));
+        for e in n.connected_drone_ids.iter() {
+            edges.insert((n.id, *e));
         }
 
-        tmp_nodekind_identifier.insert(d.id, NodeKind::Drone);
+        tmp_nodekind_identifier.insert(n.id, NodeKind::Drone);
     }
 
-    // for c in config.client {
-    //     let (sim_send_command, client_receive_command) = unbounded::<Command>();
-    //     let (drone_send_packet, drone_receive_packet) = unbounded::<Packet>();
+    for n in config.client.iter() {
+        let (sim_send_command, node_receive_command) = unbounded::<Command>();
+        let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
 
-    //     // simulation_controller_receivers.insert(c.id, client_receive_command);
-    //     simulation_controller_senders.insert(c.id, client_send_command);
+        simcontr.command_send.insert(n.id, sim_send_command);
+        // saves the channel on which the drone receives packets to use it later when creating edges
+        tmp_sender_for_node.insert(n.id, node_send_packet);
 
-    //     clients.insert(c.id, ClientServerOptions{
-    //         id: c.id,
-    //         sim_contr_send: client_send_command,
-    //         sim_contr_recv: client_receive_command,
-    //         packet_recv: todo!(),
-    //     })
+        clients.insert(
+            n.id,
+            ClientServerOptions {
+                id: n.id,
+                sim_contr_send: node_command_sender.clone(),
+                sim_contr_recv: node_receive_command,
+                packet_recv: node_receive_packet,
+                packet_send: HashMap::new(),
+            },
+        );
 
-    //     for e in c.connected_drone_ids {
-    //         edges.insert((c.id, e));
-    //     }
-    //     tmp_nodekind_identifier.insert(c.id, NodeKind::Client);
-    // }
+        for e in n.connected_drone_ids.iter() {
+            edges.insert((n.id, *e));
+        }
 
-    // for s in config.server {
-    //     for e in s.connected_drone_ids {
-    //         edges.insert((s.id, e));
-    //     }
-    //     tmp_nodekind_identifier.insert(s.id, NodeKind::Server);
-    // }
+        tmp_nodekind_identifier.insert(n.id, NodeKind::Client);
+    }
+
+    for n in config.server.iter() {
+        let (sim_send_command, node_receive_command) = unbounded::<Command>();
+        let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
+
+        simcontr.command_send.insert(n.id, sim_send_command);
+        // saves the channel on which the drone receives packets to use it later when creating edges
+        tmp_sender_for_node.insert(n.id, node_send_packet);
+
+        servers.insert(
+            n.id,
+            ClientServerOptions {
+                id: n.id,
+                sim_contr_send: node_command_sender.clone(),
+                sim_contr_recv: node_receive_command,
+                packet_recv: node_receive_packet,
+                packet_send: HashMap::new(),
+            },
+        );
+
+        for e in n.connected_drone_ids.iter() {
+            edges.insert((n.id, *e));
+        }
+
+        tmp_nodekind_identifier.insert(n.id, NodeKind::Server);
+    }
 
     while let Some((from, to)) = edges.iter().copied().next() {
         // check that edge respects bidirectionality
