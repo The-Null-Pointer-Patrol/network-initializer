@@ -3,7 +3,9 @@ use std::collections::{HashMap, HashSet};
 use crossbeam_channel::{unbounded, Sender};
 use wg_2024::{config::Config, controller::Command, network::NodeId, packet::Packet};
 
-use crate::structs_and_enums::{ClientServerOptions, DroneOptions, NodeKind, SimControllerOptions};
+use crate::structs_and_enums::{ClientServerOptions, DroneOptions};
+
+use network_initializer::unofficial_wg_implementations::SimControllerOptions;
 
 pub fn config_to_options(
     config: &Config,
@@ -20,17 +22,18 @@ pub fn config_to_options(
     let mut simcontr = SimControllerOptions {
         command_send: HashMap::new(),
         command_recv: simcontroller_command_receiver,
+        config:config.clone()
     };
 
     let mut edges: HashSet<(NodeId, NodeId)> = HashSet::new();
 
     let mut tmp_sender_for_node: HashMap<NodeId, Sender<Packet>> = HashMap::new();
     // could be added to simulation controller
-    let mut tmp_nodekind_identifier: HashMap<NodeId, NodeKind> = HashMap::new();
 
     // the 3 following for cycles have a lot of shared code,
     // but I think it's better to wait to see if there are protocol changes before trying to optimize them
 
+    // todo: check that there are no duplicate ids
     for n in config.drone.iter() {
         let (sim_send_command, node_receive_command) = unbounded::<Command>();
         let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
@@ -55,7 +58,6 @@ pub fn config_to_options(
             edges.insert((n.id, *e));
         }
 
-        tmp_nodekind_identifier.insert(n.id, NodeKind::Drone);
     }
 
     for n in config.client.iter() {
@@ -81,7 +83,6 @@ pub fn config_to_options(
             edges.insert((n.id, *e));
         }
 
-        tmp_nodekind_identifier.insert(n.id, NodeKind::Client);
     }
 
     for n in config.server.iter() {
@@ -107,7 +108,6 @@ pub fn config_to_options(
             edges.insert((n.id, *e));
         }
 
-        tmp_nodekind_identifier.insert(n.id, NodeKind::Server);
     }
 
     while let Some((from, to)) = edges.iter().copied().next() {
