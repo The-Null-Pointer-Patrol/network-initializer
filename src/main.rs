@@ -10,8 +10,6 @@ use wg_2024::drone::Drone;
 
 mod config_loader;
 mod structs_and_enums;
-// export it so that we can use the trait in SimulationController
-pub mod unofficial_wg_implementations;
 
 // ? shouldn't this be up to the single groups
 use wg_2024::config::{Client as ClientCfg, Config, Drone as DroneCfg, Server as ServerCfg};
