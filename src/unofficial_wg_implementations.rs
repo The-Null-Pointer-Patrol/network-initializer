@@ -1,5 +1,5 @@
 // simulates structs, traits etc that could be published in the WG repo (hopefully)
-// Simcontroller will probably be implemented like this in the next days, 
+// Simcontroller will probably be implemented like this in the next days,
 // things that don't get implemented by wg will be moved to structs_and_enums probably
 
 use std::collections::HashMap;
@@ -13,14 +13,18 @@ pub struct SimControllerOptions {
     pub config: Config,
 }
 
-pub trait SimulationController{
-    fn new(opt:SimControllerOptions)-> Self;
+pub trait SimulationController {
+    fn new(opt: SimControllerOptions) -> Self;
     fn run(&mut self);
 }
 
 // currently is in working group PR
-#[derive(Debug, Clone)]
+pub trait Drone {
+    fn new(options: DroneOptions) -> Self;
+    fn run(&mut self);
+}
 
+#[derive(Debug, Clone)]
 pub struct DroneOptions {
     pub id: NodeId,
     pub sim_contr_send: Sender<Command>,
