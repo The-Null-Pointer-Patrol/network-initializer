@@ -38,8 +38,8 @@ fn main() {
     for (id, options) in servers {
         // for now incompatible
         let handler = thread::spawn(move || {
-            let mut drone = MyServer::new(options);
-            drone.run();
+            //let mut drone = MyServer::new(options);
+            //drone.run();
         });
         // todo: handle result
         handles.push(handler);
@@ -48,16 +48,16 @@ fn main() {
     for (id, options) in clients {
         // for now incompatible
         let handler = thread::spawn(move || {
-            let mut drone = MyClient::new(options);
-            drone.run();
+            //let mut drone = MyClient::new(options);
+            //drone.run();
         });
         // todo: handle result
         handles.push(handler);
     }
 
     let handler = thread::spawn(move || {
-        let mut simulation_controller = ;
-        simulation_controller.run();
+        // let mut simulation_controller = ;
+        // simulation_controller.run();
     });
     handles.push(handler);
 

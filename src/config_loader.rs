@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
 use crossbeam_channel::{unbounded, Sender};
-use wg_2024::{config::Config, controller::Command, network::NodeId, packet::Packet};
+use network_initializer::unofficial_wg_implementations::SimControllerOptions;
+use wg_2024::{config::Config, controller::Command, drone::DroneOptions, network::NodeId, packet::Packet};
 
 use crate::structs_and_enums::ClientServerOptions;
 
-use network_initializer::unofficial_wg_implementations::{DroneOptions, SimControllerOptions};
 
 pub fn config_to_options(
     config: &Config,
