@@ -14,8 +14,6 @@ mod structs_and_enums;
 
 // ? shouldn't this be up to the single groups
 use wg_2024::config::{Client as ClientCfg, Config, Drone as DroneCfg, Server as ServerCfg};
-use wg_2024::network::NodeId;
-use wg_2024::packet::Packet;
 
 fn main() {
     // load config from toml
@@ -39,7 +37,7 @@ fn main() {
     for (id, options) in servers {
         // for now incompatible
         let handler = thread::spawn(move || {
-            //let mut drone = MyServer::new(options);
+            //let mut server = MyServer::new(options);
             //drone.run();
         });
         // todo: handle result
@@ -49,7 +47,7 @@ fn main() {
     for (id, options) in clients {
         // for now incompatible
         let handler = thread::spawn(move || {
-            //let mut drone = MyClient::new(options);
+            //let mut client = MyClient::new(options);
             //drone.run();
         });
         // todo: handle result
