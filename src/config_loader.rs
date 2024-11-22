@@ -1,11 +1,27 @@
+use std::collections::{HashMap, HashSet};
+
+use crossbeam_channel::{unbounded, Sender};
+use wg_2024::{config::Config, controller::Command, network::NodeId, packet::Packet};
+
+use crate::structs_and_enums::{ClientServerOptions, DroneOptions, NodeKind, SimControllerOptions};
+
 pub fn config_to_options(
     config: &Config,
-    drones: &mut HashMap<NodeId, DroneOptions>,
-    clients: &mut HashMap<NodeId, ClientServerOptions>,
-    servers: &mut HashMap<NodeId, ClientServerOptions>,
-    simcontr: &mut SimControllerOptions,
-    node_command_sender: Sender<Command>,
+) -> (
+    HashMap<NodeId, DroneOptions>,
+    HashMap<NodeId, ClientServerOptions>,
+    HashMap<NodeId, ClientServerOptions>,
+    SimControllerOptions,
 ) {
+    let mut drones: HashMap<NodeId, DroneOptions> = HashMap::new();
+    let mut clients: HashMap<NodeId, ClientServerOptions> = HashMap::new();
+    let mut servers: HashMap<NodeId, ClientServerOptions> = HashMap::new();
+    let (node_command_sender, simcontroller_command_receiver) = unbounded::<Command>();
+    let mut simcontr = SimControllerOptions {
+        command_send: HashMap::new(),
+        command_recv: simcontroller_command_receiver,
+    };
+
     let mut edges: HashSet<(NodeId, NodeId)> = HashSet::new();
 
     // let mut simulation_controller_receivers: HashMap<NodeId, Receiver<Command>> = HashMap::new();
@@ -101,4 +117,6 @@ pub fn config_to_options(
         edges.remove(&(from, to));
         edges.remove(&(to, from));
     }
+
+    (drones, clients, servers, simcontr)
 }
