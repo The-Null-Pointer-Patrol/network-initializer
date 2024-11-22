@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::thread;
 
+use ap24_simulation_controller::MySimulationController;
 use config_loader::config_to_options;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use null_pointer_drone::MyDrone;
@@ -23,7 +24,7 @@ fn main() {
 
     let (drones, clients, servers, simcontr) = config_loader::config_to_options(&config);
 
-    let handles = vec![];
+    let mut handles = vec![];
 
     for (id, options) in drones {
         // for now incompatible
@@ -56,8 +57,8 @@ fn main() {
     }
 
     let handler = thread::spawn(move || {
-        // let mut simulation_controller = ;
-        // simulation_controller.run();
+        let mut simulation_controller = MySimulationController::new(simcontr);
+        simulation_controller.run();
     });
     handles.push(handler);
 

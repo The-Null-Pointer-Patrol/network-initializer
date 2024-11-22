@@ -1,11 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
 use crossbeam_channel::{unbounded, Sender};
-use network_initializer::unofficial_wg_implementations::SimControllerOptions;
-use wg_2024::{config::Config, controller::Command, drone::DroneOptions, network::NodeId, packet::Packet};
+use wg_2024::{
+    config::Config,
+    controller::{Command, SimControllerOptions},
+    drone::DroneOptions,
+    network::NodeId,
+    packet::Packet,
+};
 
 use crate::structs_and_enums::ClientServerOptions;
-
 
 pub fn config_to_options(
     config: &Config,
@@ -54,7 +58,7 @@ pub fn config_to_options(
             },
         );
 
-        for e in n.connected_drone_ids.iter() {
+        for e in n.connected_node_ids.iter() {
             edges.insert((n.id, *e));
         }
     }
@@ -115,16 +119,18 @@ pub fn config_to_options(
         }
 
         // creates the two connections between nodes of the edge
-        drones
-            .get_mut(&from)
-            .unwrap()
-            .packet_send
-            .insert(to, tmp_sender_for_node.get(&to).unwrap().clone());
-        drones
-            .get_mut(&to)
-            .unwrap()
-            .packet_send
-            .insert(from, tmp_sender_for_node.get(&from).unwrap().clone());
+        add_sender_to_node(&mut drones, &mut clients, &mut servers, &from,to, tmp_sender_for_node.get(&to).unwrap().clone());
+        add_sender_to_node(&mut drones, &mut clients, &mut servers,&to, from, tmp_sender_for_node.get(&from).unwrap().clone());
+        // drones
+        //     .get_mut(&from)
+        //     .unwrap()
+        //     .packet_send
+        //     .insert(to, tmp_sender_for_node.get(&to).unwrap().clone());
+        // drones
+        //     .get_mut(&to)
+        //     .unwrap()
+        //     .packet_send
+        //     .insert(from, tmp_sender_for_node.get(&from).unwrap().clone());
 
         // remove both representations of edge
         edges.remove(&(from, to));
@@ -132,4 +138,35 @@ pub fn config_to_options(
     }
 
     (drones, clients, servers, simcontr)
+}
+
+fn add_sender_to_node(
+    drones: &mut HashMap<NodeId, DroneOptions>,
+    clients: &mut HashMap<NodeId, ClientServerOptions>,
+    servers: &mut HashMap<NodeId, ClientServerOptions>,
+    node:&NodeId,
+    k:NodeId,
+    v:Sender<Packet>
+) {
+    if drones.contains_key(node){
+        drones
+            .get_mut(node)
+            .unwrap()
+            .packet_send
+            .insert(k, v);
+    }
+    else if clients.contains_key(node){
+        clients
+            .get_mut(node)
+            .unwrap()
+            .packet_send
+            .insert(k, v);
+    }
+    else if servers.contains_key(node){
+        servers
+            .get_mut(node)
+            .unwrap()
+            .packet_send
+            .insert(k, v);
+    }
 }
