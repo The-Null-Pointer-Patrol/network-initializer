@@ -15,3 +15,30 @@ pub struct ClientServerOptions {
     pub packet_send: HashMap<NodeId, Sender<Packet>>,
 }
 
+pub struct MyClient{
+    options : ClientServerOptions,
+}
+
+impl MyClient{
+    pub fn new(options : ClientServerOptions) -> Self{
+        Self{options}
+    }
+
+    pub fn run(self){
+        todo!()
+    }
+}
+
+pub struct MyServer{
+    options : ClientServerOptions,
+}
+
+impl MyServer{
+    pub fn new(options : ClientServerOptions) -> Self{
+        Self{options}
+    }
+
+    pub fn run(self){
+        todo!()
+    }
+}

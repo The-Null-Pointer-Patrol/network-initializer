@@ -9,7 +9,7 @@ use wg_2024::{
     packet::Packet,
 };
 
-use crate::structs_and_enums::ClientServerOptions;
+use crate::dummy_nodes::ClientServerOptions;
 
 pub fn config_to_options(
     config: &Config,

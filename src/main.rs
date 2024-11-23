@@ -4,13 +4,14 @@ use std::thread;
 use ap24_simulation_controller::MySimulationController;
 use config_loader::config_to_options;
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use dummy_nodes::{MyClient, MyServer};
 use null_pointer_drone::MyDrone;
 use wg_2024::controller::{Command, SimulationController};
 use wg_2024::drone::Drone;
 // use wg_2024::drone::DroneOptions;
 
 mod config_loader;
-mod structs_and_enums;
+mod dummy_nodes;
 
 // ? shouldn't this be up to the single groups
 use wg_2024::config::{Client as ClientCfg, Config, Drone as DroneCfg, Server as ServerCfg};
@@ -24,7 +25,7 @@ fn main() {
 
     let mut handles = vec![];
 
-    for (id, options) in drones {
+    for (_id, options) in drones {
         // for now incompatible
         let handler = thread::spawn(move || {
             let mut drone = MyDrone::new(options);
@@ -34,21 +35,21 @@ fn main() {
         handles.push(handler);
     }
 
-    for (id, options) in servers {
+    for (_id, options) in servers {
         // for now incompatible
         let handler = thread::spawn(move || {
-            //let mut server = MyServer::new(options);
-            //drone.run();
+            let server = MyServer::new(options);
+            server.run();
         });
         // todo: handle result
         handles.push(handler);
     }
 
-    for (id, options) in clients {
+    for (_id, options) in clients {
         // for now incompatible
         let handler = thread::spawn(move || {
-            //let mut client = MyClient::new(options);
-            //drone.run();
+            let client = MyClient::new(options);
+            client.run();
         });
         // todo: handle result
         handles.push(handler);
