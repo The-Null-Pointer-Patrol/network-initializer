@@ -1,12 +1,9 @@
-use std::collections::{HashMap, HashSet};
 use std::thread;
 
 use ap24_simulation_controller::MySimulationController;
-use config_loader::config_to_options;
-use crossbeam_channel::{unbounded, Receiver, Sender};
 use dummy_nodes::{MyClient, MyServer};
 use null_pointer_drone::MyDrone;
-use wg_2024::controller::{Command, SimulationController};
+use wg_2024::controller::SimulationController;
 use wg_2024::drone::Drone;
 // use wg_2024::drone::DroneOptions;
 
@@ -14,7 +11,7 @@ mod config_loader;
 mod dummy_nodes;
 
 // ? shouldn't this be up to the single groups
-use wg_2024::config::{Client as ClientCfg, Config, Drone as DroneCfg, Server as ServerCfg};
+use wg_2024::config::Config;
 
 fn main() {
     // load config from toml
