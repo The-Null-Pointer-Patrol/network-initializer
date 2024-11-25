@@ -1,9 +1,10 @@
 use std::{collections::{HashMap, HashSet}, fmt};
 
+use ap24_simulation_controller::SimControllerOptions;
 use crossbeam_channel::{unbounded, Sender};
 use wg_2024::{
     config::Config,
-    controller::{Command, SimControllerOptions},
+    controller::{Command},
     drone::DroneOptions,
     network::NodeId,
     packet::Packet,
