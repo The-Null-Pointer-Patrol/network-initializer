@@ -1,27 +1,67 @@
-use null_pointer_drone::MyDrone;
-use wg_2024::drone::{Drone, DroneOptions};
+use std::thread;
 
+use ap24_simulation_controller::MySimulationController;
+use dummy_nodes::{MyClient, MyServer};
+use null_pointer_drone::MyDrone;
+use wg_2024::controller::SimulationController;
+use wg_2024::drone::Drone;
+// use wg_2024::drone::DroneOptions;
+
+mod config_loader;
+mod dummy_nodes;
+
+// ? shouldn't this be up to the single groups
 use wg_2024::config::Config;
 
 fn main() {
-    println!("Hello, world!");
-    let config_data = std::fs::read_to_string("input.toml").expect("Unable to read config file");
+    // load config from toml
+    let config_data = std::fs::read_to_string("./input.toml").expect("Unable to read config file");
     let config: Config = toml::from_str(&config_data).expect("Unable to parse TOML");
 
-    // trait Drone is not object safe (because of the new function)
-    // let drones : Vec<Box<dyn Drone>> = Vec::new();
+    let (drones, clients, servers, simcontr) = config_loader::config_to_options(&config);
 
-    for s in config.drone{
+    let mut handles = vec![];
 
+    for (_id, options) in drones {
+        // for now incompatible
+        let handler = thread::spawn(move || {
+            let mut drone = MyDrone::new(options);
+            drone.run();
+        });
+        // todo: handle result
+        handles.push(handler);
     }
 
-    for c in config.client{
-
+    for (_id, options) in servers {
+        // for now incompatible
+        let handler = thread::spawn(move || {
+            let server = MyServer::new(options);
+            server.run();
+        });
+        // todo: handle result
+        handles.push(handler);
     }
 
-    for s in config.server{
-
+    for (_id, options) in clients {
+        // for now incompatible
+        let handler = thread::spawn(move || {
+            let client = MyClient::new(options);
+            client.run();
+        });
+        // todo: handle result
+        handles.push(handler);
     }
 
-    //println!("{:#?}", config);
+    let handler = thread::spawn(move || {
+        let mut simulation_controller = MySimulationController::new(simcontr);
+        simulation_controller.run();
+    });
+    handles.push(handler);
+
+    // Wait for all threads to finish
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    println!("All threads have completed.");
 }
