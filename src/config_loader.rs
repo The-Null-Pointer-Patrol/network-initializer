@@ -32,6 +32,9 @@ pub fn config_to_options(
     let mut edges: HashSet<(NodeId, NodeId)> = HashSet::new();
 
     let mut tmp_sender_for_node: HashMap<NodeId, Sender<Packet>> = HashMap::new();
+    let mut node_ids_set : HashSet<NodeId> = HashSet::new();
+
+    let mut check_id_uniqueness = |id:NodeId| if node_ids_set.contains(&id) {panic!("error in toml config: two nodes with id {}",id)} else { node_ids_set.insert(id)};
     // could be added to simulation controller
 
     // the 3 following for cycles have a lot of shared code,
@@ -39,6 +42,8 @@ pub fn config_to_options(
 
     // todo: check that there are no duplicate ids
     for n in config.drone.iter() {
+        check_id_uniqueness(n.id);
+        
         let (sim_send_command, node_receive_command) = unbounded::<Command>();
         let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
 
@@ -64,6 +69,8 @@ pub fn config_to_options(
     }
 
     for n in config.client.iter() {
+        check_id_uniqueness(n.id);
+
         let (sim_send_command, node_receive_command) = unbounded::<Command>();
         let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
 
@@ -88,6 +95,8 @@ pub fn config_to_options(
     }
 
     for n in config.server.iter() {
+        check_id_uniqueness(n.id);
+
         let (sim_send_command, node_receive_command) = unbounded::<Command>();
         let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
 
