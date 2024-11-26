@@ -19,32 +19,26 @@ fn main() {
     let (drones, clients, servers, mut simcontr) = config_loader::config_to_options(&config);
 
     for (_id, options) in drones {
-        // for now incompatible
         let handler = thread::spawn(move || {
             let mut drone = MyDrone::new(options);
             drone.run();
         });
-        // todo: handle result
         simcontr.node_handles.push(handler);
     }
 
     for (_id, options) in servers {
-        // for now incompatible
         let handler = thread::spawn(move || {
             let server = MyServer::new(options);
             server.run();
         });
-        // todo: handle result
         simcontr.node_handles.push(handler);
     }
 
     for (_id, options) in clients {
-        // for now incompatible
         let handler = thread::spawn(move || {
             let client = MyClient::new(options);
             client.run();
         });
-        // todo: handle result
         simcontr.node_handles.push(handler);
     }
 
@@ -54,7 +48,6 @@ fn main() {
     });
 
     handler.join();
-    
 
-    println!("All threads have completed.");
+    println!("Simulation Controller thread exited");
 }
