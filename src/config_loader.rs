@@ -1,20 +1,19 @@
-use std::{collections::{HashMap, HashSet}, fmt};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 use ap24_simulation_controller::SimControllerOptions;
 use crossbeam_channel::{unbounded, Sender};
 use wg_2024::{
-    config::Config,
-    controller::DroneCommand,
-    controller::NodeEvent,
-    drone::DroneOptions,
-    network::NodeId,
-    packet::Packet,
+    config::Config, controller::DroneCommand, controller::NodeEvent, drone::DroneOptions,
+    network::NodeId, packet::Packet,
 };
 
-enum NodeKind{
+enum NodeKind {
     Drone,
     Server,
-    Client
+    Client,
 }
 
 impl fmt::Display for NodeKind {
@@ -40,7 +39,7 @@ pub fn config_to_options(
     let mut drones: HashMap<NodeId, DroneOptions> = HashMap::new();
     let mut clients: HashMap<NodeId, ClientServerOptions> = HashMap::new();
     let mut servers: HashMap<NodeId, ClientServerOptions> = HashMap::new();
-    let (node_command_sender, simcontroller_command_receiver) = unbounded::<DroneCommand>();
+    let (node_command_sender, simcontroller_command_receiver) = unbounded::<NodeEvent>();
     let mut simcontr = SimControllerOptions {
         command_send: HashMap::new(),
         command_recv: simcontroller_command_receiver,
@@ -51,11 +50,17 @@ pub fn config_to_options(
 
     let mut edges: HashSet<(NodeId, NodeId)> = HashSet::new();
 
-    let mut tmp_node_kind : HashMap<NodeId,NodeKind> = HashMap::new();
-    let mut tmp_node_ids_set : HashSet<NodeId> = HashSet::new();
+    let mut tmp_node_kind: HashMap<NodeId, NodeKind> = HashMap::new();
+    let mut tmp_node_ids_set: HashSet<NodeId> = HashSet::new();
 
-    let mut check_id_uniqueness = |id:NodeId| if tmp_node_ids_set.contains(&id) {panic!("error in toml config: two nodes with id {}",id)} else { tmp_node_ids_set.insert(id)};
-    
+    let mut check_id_uniqueness = |id: NodeId| {
+        if tmp_node_ids_set.contains(&id) {
+            panic!("error in toml config: two nodes with id {}", id)
+        } else {
+            tmp_node_ids_set.insert(id)
+        }
+    };
+
     // the 3 following for cycles have a lot of shared code,
     // but I think it's better to wait to see if there are protocol changes before trying to optimize them
 
@@ -104,7 +109,6 @@ pub fn config_to_options(
             ClientServerOptions {
                 id: n.id,
                 sim_contr_send: node_command_sender.clone(),
-                sim_contr_recv: node_receive_command,
                 packet_recv: node_receive_packet,
                 packet_send: HashMap::new(),
             },
@@ -131,7 +135,6 @@ pub fn config_to_options(
             ClientServerOptions {
                 id: n.id,
                 sim_contr_send: node_command_sender.clone(),
-                sim_contr_recv: node_receive_command,
                 packet_recv: node_receive_packet,
                 packet_send: HashMap::new(),
             },
@@ -142,7 +145,15 @@ pub fn config_to_options(
         }
     }
 
-    let get_kind_from_id = |id:NodeId| if drones.contains_key(&id) {NodeKind::Drone} else if clients.contains_key(&id) {NodeKind::Client} else {NodeKind::Server};
+    let get_kind_from_id = |id: NodeId| {
+        if drones.contains_key(&id) {
+            NodeKind::Drone
+        } else if clients.contains_key(&id) {
+            NodeKind::Client
+        } else {
+            NodeKind::Server
+        }
+    };
 
     while let Some((from, to)) = edges.iter().copied().next() {
         // check that edge respects bidirectionality
@@ -151,17 +162,32 @@ pub fn config_to_options(
             panic!("initialization file is incorrect, as it does not represent a bidirectional graph: edge from {} to {} but no corresponding edge in node {}",from,to,to);
         }
 
-        if let (Some(from_kind), Some(to_kind)) = (tmp_node_kind.get(&from),tmp_node_kind.get(&to)){
+        if let (Some(from_kind), Some(to_kind)) = (tmp_node_kind.get(&from), tmp_node_kind.get(&to))
+        {
             if !matches!(from_kind, NodeKind::Drone) && !matches!(to_kind, NodeKind::Drone) {
                 panic!("Initialization file is incorrect, as there is an edge between {} and {}, which are of type {} and {}, which isn't allowed", from, to, from_kind, to_kind);
-            } 
-        }  
-        // todo: do we need to consider the else case? 
+            }
+        }
+        // todo: do we need to consider the else case?
         // considering that in this function it should(?) never happen
-        
+
         // creates the two connections between nodes of the edge
-        add_sender_to_node(&mut drones, &mut clients, &mut servers, &from,to, simcontr.packet_send.get(&to).unwrap().clone());
-        add_sender_to_node(&mut drones, &mut clients, &mut servers,&to, from, simcontr.packet_send.get(&from).unwrap().clone());
+        add_sender_to_node(
+            &mut drones,
+            &mut clients,
+            &mut servers,
+            &from,
+            to,
+            simcontr.packet_send.get(&to).unwrap().clone(),
+        );
+        add_sender_to_node(
+            &mut drones,
+            &mut clients,
+            &mut servers,
+            &to,
+            from,
+            simcontr.packet_send.get(&from).unwrap().clone(),
+        );
 
         // remove both representations of edge
         edges.remove(&(from, to));
@@ -175,29 +201,15 @@ fn add_sender_to_node(
     drones: &mut HashMap<NodeId, DroneOptions>,
     clients: &mut HashMap<NodeId, ClientServerOptions>,
     servers: &mut HashMap<NodeId, ClientServerOptions>,
-    node:&NodeId,
-    k:NodeId,
-    v:Sender<Packet>
+    node: &NodeId,
+    k: NodeId,
+    v: Sender<Packet>,
 ) {
-    if drones.contains_key(node){
-        drones
-            .get_mut(node)
-            .unwrap()
-            .packet_send
-            .insert(k, v);
-    }
-    else if clients.contains_key(node){
-        clients
-            .get_mut(node)
-            .unwrap()
-            .packet_send
-            .insert(k, v);
-    }
-    else if servers.contains_key(node){
-        servers
-            .get_mut(node)
-            .unwrap()
-            .packet_send
-            .insert(k, v);
+    if drones.contains_key(node) {
+        drones.get_mut(node).unwrap().packet_send.insert(k, v);
+    } else if clients.contains_key(node) {
+        clients.get_mut(node).unwrap().packet_send.insert(k, v);
+    } else if servers.contains_key(node) {
+        servers.get_mut(node).unwrap().packet_send.insert(k, v);
     }
 }

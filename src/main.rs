@@ -3,7 +3,6 @@ use std::thread;
 use ap24_simulation_controller::MySimulationController;
 use dummy_nodes::{MyClient, MyServer};
 use null_pointer_drone::MyDrone;
-use wg_2024::controller::SimulationController;
 use wg_2024::drone::Drone;
 // use wg_2024::drone::DroneOptions;
 
