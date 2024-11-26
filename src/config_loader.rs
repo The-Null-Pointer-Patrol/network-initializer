@@ -4,7 +4,8 @@ use ap24_simulation_controller::SimControllerOptions;
 use crossbeam_channel::{unbounded, Sender};
 use wg_2024::{
     config::Config,
-    controller::{Command},
+    controller::DroneCommand,
+    controller::NodeEvent,
     drone::DroneOptions,
     network::NodeId,
     packet::Packet,
@@ -39,12 +40,13 @@ pub fn config_to_options(
     let mut drones: HashMap<NodeId, DroneOptions> = HashMap::new();
     let mut clients: HashMap<NodeId, ClientServerOptions> = HashMap::new();
     let mut servers: HashMap<NodeId, ClientServerOptions> = HashMap::new();
-    let (node_command_sender, simcontroller_command_receiver) = unbounded::<Command>();
+    let (node_command_sender, simcontroller_command_receiver) = unbounded::<DroneCommand>();
     let mut simcontr = SimControllerOptions {
         command_send: HashMap::new(),
         command_recv: simcontroller_command_receiver,
         packet_send: HashMap::new(),
         config: config.clone(),
+        node_handles: Vec::new(),
     };
 
     let mut edges: HashSet<(NodeId, NodeId)> = HashSet::new();
@@ -62,7 +64,7 @@ pub fn config_to_options(
         check_id_uniqueness(n.id);
         tmp_node_kind.insert(n.id, NodeKind::Drone);
 
-        let (sim_send_command, node_receive_command) = unbounded::<Command>();
+        let (sim_send_command, node_receive_command) = unbounded::<DroneCommand>();
         let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
 
         simcontr.command_send.insert(n.id, sim_send_command);
@@ -73,8 +75,8 @@ pub fn config_to_options(
             n.id,
             DroneOptions {
                 id: n.id,
-                sim_contr_send: node_command_sender.clone(),
-                sim_contr_recv: node_receive_command,
+                controller_send: node_command_sender.clone(),
+                controller_recv: node_receive_command,
                 packet_recv: node_receive_packet,
                 packet_send: HashMap::new(),
                 pdr: n.pdr,
@@ -90,7 +92,7 @@ pub fn config_to_options(
         check_id_uniqueness(n.id);
         tmp_node_kind.insert(n.id, NodeKind::Client);
 
-        let (sim_send_command, node_receive_command) = unbounded::<Command>();
+        let (sim_send_command, node_receive_command) = unbounded::<DroneCommand>();
         let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
 
         simcontr.command_send.insert(n.id, sim_send_command);
@@ -117,7 +119,7 @@ pub fn config_to_options(
         check_id_uniqueness(n.id);
         tmp_node_kind.insert(n.id, NodeKind::Server);
 
-        let (sim_send_command, node_receive_command) = unbounded::<Command>();
+        let (sim_send_command, node_receive_command) = unbounded::<DroneCommand>();
         let (node_send_packet, node_receive_packet) = unbounded::<Packet>();
 
         simcontr.command_send.insert(n.id, sim_send_command);

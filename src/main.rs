@@ -10,7 +10,6 @@ use wg_2024::drone::Drone;
 mod config_loader;
 mod dummy_nodes;
 
-// ? shouldn't this be up to the single groups
 use wg_2024::config::Config;
 
 fn main() {
@@ -18,9 +17,7 @@ fn main() {
     let config_data = std::fs::read_to_string("./input.toml").expect("Unable to read config file");
     let config: Config = toml::from_str(&config_data).expect("Unable to parse TOML");
 
-    let (drones, clients, servers, simcontr) = config_loader::config_to_options(&config);
-
-    let mut handles = vec![];
+    let (drones, clients, servers, mut simcontr) = config_loader::config_to_options(&config);
 
     for (_id, options) in drones {
         // for now incompatible
@@ -29,7 +26,7 @@ fn main() {
             drone.run();
         });
         // todo: handle result
-        handles.push(handler);
+        simcontr.node_handles.push(handler);
     }
 
     for (_id, options) in servers {
@@ -39,7 +36,7 @@ fn main() {
             server.run();
         });
         // todo: handle result
-        handles.push(handler);
+        simcontr.node_handles.push(handler);
     }
 
     for (_id, options) in clients {
@@ -49,19 +46,16 @@ fn main() {
             client.run();
         });
         // todo: handle result
-        handles.push(handler);
+        simcontr.node_handles.push(handler);
     }
 
     let handler = thread::spawn(move || {
         let mut simulation_controller = MySimulationController::new(simcontr);
         simulation_controller.run();
     });
-    handles.push(handler);
 
-    // Wait for all threads to finish
-    for handle in handles {
-        handle.join().unwrap();
-    }
+    handler.join();
+    
 
     println!("All threads have completed.");
 }
